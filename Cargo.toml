@@ -1,0 +1,9 @@
+[package]
+name = "wikiapi"
+version = "0.1.0"
+authors = ["niedzwiedzwo@gmail.com <niedzwiedzwo@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+reqwest = "*"
+serde = "*"
