@@ -1,5 +1,7 @@
 use reqwest::get;
 use std::fmt;
+use serde::{ Serialize };
+use std::error::Error;
 
 
 fn raw_response(query: &str, lang: Language) -> RawWikiSearchResult {
@@ -12,7 +14,7 @@ fn full_query(query: &str, language: Language) -> String {
     format!("https://{}.wikipedia.org/w/api.php?action=opensearch&search={}", language, query)
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum Language {
     English,
     Polish,
@@ -30,7 +32,7 @@ impl fmt::Display for Language {
 
 pub type RawWikiSearchResult = (String, Vec<String>, Vec<String>, Vec<String>);
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Article {
     title: String,
     summary: String,
@@ -38,7 +40,7 @@ pub struct Article {
     lang: Language,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct WikiSearchResult {
     pub language: Language,
     pub articles: Vec<Article>,
@@ -49,6 +51,10 @@ impl WikiSearchResult {
         let query = full_query(query, lang);
         let response = raw_response(&query, lang);
         results(response, lang)
+    }
+
+    pub fn json(&self) -> Result<String, Box<Error>> {
+        Ok(serde_json::to_string(self)?)
     }
 }
 
