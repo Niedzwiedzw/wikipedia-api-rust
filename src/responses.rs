@@ -40,8 +40,8 @@ pub struct Article {
 
 #[derive(Debug)]
 pub struct WikiSearchResult {
-    language: Language,
-    articles: Vec<Article>,
+    pub language: Language,
+    pub articles: Vec<Article>,
 }
 
 impl WikiSearchResult {

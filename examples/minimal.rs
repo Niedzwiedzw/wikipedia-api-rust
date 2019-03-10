@@ -1,8 +1,4 @@
-mod responses;
-#[macro_use] extern crate itertools;
-use crate::responses::WikiSearchResult;
-
-use crate::responses::Language;
+use wikiapi::responses::{ WikiSearchResult, Language };
 
 fn main() {
     let query = "black";
