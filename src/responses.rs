@@ -2,7 +2,7 @@ use reqwest::get;
 use std::fmt;
 use serde::{ Serialize };
 use std::error::Error;
-
+use strum::IntoEnumIterator;
 
 fn raw_response(query: &str, lang: Language) -> RawWikiSearchResult {
     let link = full_query(query, lang);
@@ -14,10 +14,14 @@ fn full_query(query: &str, language: Language) -> String {
     format!("https://{}.wikipedia.org/w/api.php?action=opensearch&search={}", language, query)
 }
 
-#[derive(Debug, Copy, Clone, Serialize)]
+#[derive(Debug, Copy, Clone, Serialize, EnumIter)]
 pub enum Language {
     English,
     Polish,
+}
+
+pub fn all_languages() -> Vec<Language> {
+    Language::iter().collect()
 }
 
 impl fmt::Display for Language {
