@@ -3,5 +3,4 @@ pub mod responses;
 #[macro_use] extern crate strum_macros;
 
 pub use crate::responses::{ WikiSearchResult, Language };
-
-
+pub use strum::IntoEnumIterator;
