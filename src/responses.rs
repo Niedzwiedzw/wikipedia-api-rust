@@ -38,10 +38,10 @@ pub type RawWikiSearchResult = (String, Vec<String>, Vec<String>, Vec<String>);
 
 #[derive(Debug, Serialize)]
 pub struct Article {
-    title: String,
-    summary: String,
-    link: String,
-    lang: Language,
+    pub title: String,
+    pub summary: String,
+    pub link: String,
+    pub lang: Language,
 }
 
 #[derive(Debug, Serialize)]
