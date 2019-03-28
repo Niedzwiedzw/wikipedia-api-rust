@@ -1,23 +1,39 @@
 use reqwest::get;
 use std::fmt;
-use serde::{ Serialize };
+use std::iter::FromIterator;
+use serde::{ Serialize, Deserialize };
 use std::error::Error;
 use strum::IntoEnumIterator;
+use crate::response_schemas::Root;
+use crate::language::Language;
 
-fn raw_response(query: &str, lang: Language) -> RawWikiSearchResult {
-    let link = full_query(query, lang);
+
+fn raw_opensearch_respnose(query: &str, lang: Language) -> RawWikiSearchResult {
+    let link = opensearch_query(query, lang);
     let mut response = get(&link).expect("unable to fetch Wikipedia");
     response.json().expect("Unable to parse JSON")
 }
 
-fn full_query(query: &str, language: Language) -> String {
-    format!("https://{}.wikipedia.org/w/api.php?action=opensearch&search={}", language, query)
+fn raw_language_links_response(title: &str, lang: Language) -> Root {
+    let link = language_links_query(title, lang);
+    let mut response = get(&link).expect("unable to fetch langlinks");
+    response.json().expect("unable to parse string...")
 }
 
-#[derive(Debug, Copy, Clone, Serialize, EnumIter)]
-pub enum Language {
-    English,
-    Polish,
+fn opensearch_query(query: &str, language: Language) -> String {
+    format!("https://{}.wikipedia.org/w/api.php?action=opensearch&search={}&prop=langlinks", language, query)
+}
+
+fn language_links_query(title: &str, language: Language) -> String {
+    format!(
+        "https://{}.wikipedia.org/w/api.php?action=query\
+        &format=json\
+        &prop=langlinks\
+        &meta=\
+        &continue=\
+        &titles={}\
+        &utf8=1\
+        &lllimit=500", language, title)
 }
 
 pub fn all_languages() -> Vec<Language> {
@@ -26,11 +42,12 @@ pub fn all_languages() -> Vec<Language> {
 
 impl fmt::Display for Language {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let repr = match self {
-            Language::Polish => "pl",
-            Language::English => "en",
-        };
-        write!(f, "{}", repr)
+        let repr = serde_json::to_string(&self).expect("failed to serialize language");
+        let repr = repr
+            .chars()
+            .filter(|&b| b != '\\' && b != '"');
+        let repr = String::from_iter(repr);
+        write!(f, "{}", dbg!(repr))
     }
 }
 
@@ -44,6 +61,18 @@ pub struct Article {
     pub lang: Language,
 }
 
+impl Article {
+    pub fn language_links(&self) -> Root {
+        raw_language_links_response(&self.title, self.lang)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LanguageLink {
+    pub lang: Language,
+    #[serde(alias = "*")]pub title: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct WikiSearchResult {
     pub language: Language,
@@ -52,8 +81,8 @@ pub struct WikiSearchResult {
 
 impl WikiSearchResult {
     pub fn new(query: &str, lang: Language) -> Self {
-        let query = full_query(query, lang);
-        let response = raw_response(&query, lang);
+        let query = opensearch_query(query, lang);
+        let response = raw_opensearch_respnose(&query, lang);
         results(response, lang)
     }
 
@@ -68,5 +97,6 @@ pub fn results(result: RawWikiSearchResult, lang: Language) -> WikiSearchResult 
         .into_iter()
         .map(|(title, summary, link)| Article { title, summary, link, lang })
         .collect();
+
     WikiSearchResult { language: lang, articles }
 }
